@@ -1,14 +1,14 @@
 //#region summarizer
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
-import { useEffect } from "react";
-import { useRef } from "react";
+
 const options = {
   sharedContext: "This is product reviews",
   type: "key-points",
-  format: "markdown",
-  length: "medium",
+  format: "plain-text",
+  length: "short",
 };
+
 // Array of review data
 const reviews = [
   {
@@ -77,9 +77,10 @@ const reviews = [
 ];
 
 function Summarizer() {
-  const [isLoading, setIsloading] = useState(false);
+  const [isLoading, setIsloading] = useState({});
   const summarizer = useRef(null);
   const [summary, setSummary] = useState({});
+
   useEffect(() => {
     const callAiModel = async () => {
       const AI = await ai.summarizer.create(options);
@@ -87,19 +88,19 @@ function Summarizer() {
     };
     callAiModel();
   }, []);
+
   const handleSummarizer = async (review) => {
     try {
-      setIsloading(true);
-      console.log({ req: review.text });
+      setIsloading((prev) => ({ ...prev, [review.id]: true }));
       const result = await summarizer.current.summarize(review.text);
-      console.log(result);
       setSummary((prev) => ({ ...prev, [review.id]: result }));
-      setIsloading(false);
+      setIsloading((prev) => ({ ...prev, [review.id]: false }));
     } catch (error) {
-      setIsloading(false);
+      setIsloading((prev) => ({ ...prev, [review.id]: false }));
       console.log(error);
     }
   };
+
   return (
     <>
       <div className="App">
@@ -128,10 +129,10 @@ function Summarizer() {
                       <pre className="result">{summary[review.id]}</pre>
                     ) : (
                       <button
-                        disabled={isLoading}
+                        disabled={isLoading[review.id]}
                         onClick={() => handleSummarizer(review)}
                       >
-                        Summarize
+                        {isLoading[review.id] ? "Loading..." : "Summarize"}
                       </button>
                     )}
                   </div>
